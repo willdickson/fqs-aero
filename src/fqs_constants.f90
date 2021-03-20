@@ -6,7 +6,7 @@ module fqs_constants
     
     private
     
-    public pi, e_, i_
+    public pi, e_, i_ 
     
     real(wp),    parameter :: pi  = 3.1415926535897932384626433832795_wp
     real(wp),    parameter :: e_  = 2.7182818284590452353602874713527_wp

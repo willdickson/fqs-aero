@@ -6,6 +6,7 @@ module fqs_conversions
     use fqs_euler_angle,  only: euler_t
     use fqs_constants,    only: pi 
 
+
     implicit none
     private
 
@@ -41,15 +42,14 @@ contains
     elemental function quat_from_euler(angles) result(q)
         type(euler_t), intent(in) :: angles
         type(quat_t)              :: q
-        real(wp), parameter       :: half = 0.5_wp
         real(wp)                  :: ch, ca, cb
         real(wp)                  :: sh, sa, sb
-        ch = cos(half * (angles % heading))
-        ca = cos(half * (angles % attitude))
-        cb = cos(half * (angles % bank))
-        sh = sin(half * (angles % heading))
-        sa = sin(half * (angles % attitude))
-        sb = sin(half * (angles % bank))
+        ch = cos(0.5_wp * (angles % heading))
+        ca = cos(0.5_wp * (angles % attitude))
+        cb = cos(0.5_wp * (angles % bank))
+        sh = sin(0.5_wp * (angles % heading))
+        sa = sin(0.5_wp * (angles % attitude))
+        sb = sin(0.5_wp * (angles % bank))
         q % w = (ch * ca * cb) - (sh * sa * sb)
         q % x = (sh * sa * cb) + (ch * ca * sb)
         q % y = (sh * ca * cb) + (ch * sa * sb)
@@ -61,11 +61,10 @@ contains
         type(vect_t), intent(in)  :: axis
         real(wp),     intent(in)  :: angle 
         type(quat_t)              :: q
-        real(wp), parameter       :: half  = 0.5_wp
-        q % w = cos( half * angle )
-        q % x = (axis % x) * sin(half * angle)
-        q % y = (axis % y) * sin(half * angle)
-        q % z = (axis % z) * sin(half * angle)
+        q % w = cos( 0.5_wp * angle )
+        q % x = (axis % x) * sin(0.5_wp * angle)
+        q % y = (axis % y) * sin(0.5_wp * angle)
+        q % z = (axis % z) * sin(0.5_wp * angle)
     end function quat_from_axis_angle
 
 
@@ -115,7 +114,7 @@ contains
             angles % bank     = 0.0_wp
         else
             angles % heading  = atan2( 2.0_wp * (qwy - qxz), qxx - qyy - qzz + qww )
-            angles % attitude = asin( ( 2.0_wp*test ) / sum2)
+            angles % attitude = asin(( 2.0_wp * test) / sum2)
             angles % bank     = atan2( 2.0_wp * (qwx - qyz), -qxx + qyy - qzz + qww ) 
         end if
     end function euler_from_quat

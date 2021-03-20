@@ -27,24 +27,24 @@ module fqs_rotations
 contains 
 
 
-    elemental function rotate_euler_by_axis_angle(euler, axis, angle) result(euler_rot)
+    elemental function rotate_euler_by_axis_angle(euler, axis, angle) result(euler_new)
         ! Rotates euler angles using and axis angle rotatation
         type(euler_t), intent(in) :: euler
         type(vect_t),  intent(in) :: axis
         real(wp),      intent(in) :: angle
-        type(euler_t)             :: euler_rot
+        type(euler_t)             :: euler_new
 
         ! Local variables 
         type(quat_t)               :: q_euler
-        type(quat_t)               :: q_euler_rot
+        type(quat_t)               :: q_euler_new
         type(quat_t)               :: q_rot
         type(quat_t)               :: q_rot_inv
 
         q_euler = quat_from_euler(euler)
         q_rot = quat_from_axis_angle(axis,angle) 
         q_rot_inv = q_rot%inv()
-        q_euler_rot = q_rot * (q_euler * q_rot_inv)
-        euler_rot = euler_from_quat(q_euler_rot)
+        q_euler_new = q_rot * (q_euler * q_rot_inv)
+        euler_new = euler_from_quat(q_euler_new)
     end function rotate_euler_by_axis_angle
 
 

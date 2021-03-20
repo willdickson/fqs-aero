@@ -23,10 +23,13 @@ program main
     allocate(w(num_pts))
     allocate(u(num_pts))
 
-    angle = -pi/2.0_wp
+    angle = -0.5_wp*pi
     axis = vect_t(0.0_wp, 1.0_wp, 0.0_wp)
 
-    euler % heading = angle
+    euler % heading = 0.0 
+    print *, euler
+    euler = rotate(euler, axis, angle)
+    print *, euler
 
     v % x = linspace_fcn(0.0_wp, 10.0_wp, num_pts)
     w = rotate(v,axis,angle)
