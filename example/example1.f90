@@ -1,65 +1,37 @@
 program main
 
-    use h5fortran,  only: hdf5_file, HSIZE_T
-    use fqs,  only: wp 
-    use fqs,  only: pi
-    use fqs,  only: quat_t
-    use fqs,  only: vect_t
-    use fqs,  only: euler_t
-    use fqs,  only: linspace_fcn
-    use fqs,  only: rotate
+    use h5fortran,     only: hdf5_file, HSIZE_T
+    use pyplot_module, only: pyplot
+    use fqs,           only: wp 
 
     implicit none
 
     character(len=:), allocatable :: filename
     character(len=:), allocatable :: dataname
     real(wp), allocatable         :: be_position(:)
+    real(wp), allocatable         :: chord_le(:)
+    real(wp), allocatable         :: chord_te(:)
     integer                       :: ierr
-    integer                       :: i
+    type(pyplot)                  :: plt
 
     filename = '/home/wbd/work/programming/python/fly_aero_data/wing_data/fly_param.hdf5'
+
     dataname = '/wing/left/blade_element/position'
     call load_real_1d_dataset(filename, dataname,  be_position, ierr)
     if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
-    print *, 'size(be_position): ', size(be_position)
+    dataname = '/wing/left/blade_element/chord_leading'
+    call load_real_1d_dataset(filename, dataname,  chord_le, ierr)
+    if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
-    do i=1,size(be_position)
-        print *, i, be_position(i)
-    end do
+    dataname = '/wing/left/blade_element/chord_trailing'
+    call load_real_1d_dataset(filename, dataname,  chord_te, ierr)
+    if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
-    !integer, parameter        :: num_pts = 10
-    !type(vect_t), allocatable :: v(:)
-    !type(vect_t), allocatable :: w(:)
-    !type(vect_t), allocatable :: u(:)
-    !type(vect_t)              :: axis
-    !real(wp)                  :: angle 
-    !type(euler_t)             :: euler 
-    !integer :: i
-
-    !allocate(v(num_pts))
-    !allocate(w(num_pts))
-    !allocate(u(num_pts))
-
-    !angle = -0.5_wp*pi
-    !axis = vect_t(0.0_wp, 1.0_wp, 0.0_wp)
-
-    !euler % heading = 0.0 
-    !print *, euler
-    !euler = rotate(euler, axis, angle)
-    !print *, euler
-
-    !v % x = linspace_fcn(0.0_wp, 10.0_wp, num_pts)
-    !w = rotate(v,axis,angle)
-    !u = rotate(v,euler)
-
-    !print *, ' '
-    !do i = 1,size(v)
-    !    print *, 'v', v(i)
-    !    print *, 'w', w(i)
-    !    print *, 'u', u(i)
-    !    print *, ' '
-    !end do
+    call plt % initialize(grid=.true.,xlabel='pos',ylabel='chord',axis_equal=.true.)
+    call plt % add_plot(be_position,chord_le,label='chord le',linestyle='b',markersize=5,linewidth=2)
+    call plt % add_plot(be_position,chord_te,label='chord te',linestyle='b',markersize=5,linewidth=2)
+    call plt % showfig()
 
 contains
 

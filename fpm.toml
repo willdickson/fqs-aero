@@ -6,5 +6,6 @@ maintainer = "wbd@caltech.edu"
 copyright = "Copyright 2021, Will Dickson"
 [dependencies]
 h5fortran = {git = "https://github.com/willdickson/h5fortran-wbd-experimental"}
+pyplot-fortran = {git ="https://github.com/willdickson/pyplot-fortran"}
 [install]
 library = false
