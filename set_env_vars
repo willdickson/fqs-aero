@@ -1,0 +1,2 @@
+export FPM_INCLUDE_PATH=/home/wbd/lib/fortran/gfortran-10/include
+export LD_LIBRARY_PATH=/home/wbd/lib/fortran/gfortran-10/lib

@@ -4,9 +4,7 @@ license = "MIT"
 author = "Will Dickson"
 maintainer = "wbd@caltech.edu"
 copyright = "Copyright 2021, Will Dickson"
-[build]
-auto-executables = true
-auto-tests = true
-auto-examples = true
+[dependencies]
+h5fortran = {git = "https://github.com/willdickson/h5fortran-wbd-experimental"}
 [install]
 library = false
