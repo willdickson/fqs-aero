@@ -5,6 +5,8 @@ module fqs_axis_angle
 
     implicit none
 
+    private
+
     type, public :: axis_angle_t
         type(vect_t) :: axis
         real(wp)     :: angle  = 0.0_wp 

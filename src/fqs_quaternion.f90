@@ -1,8 +1,10 @@
 module fqs_quaternion
 
-    use fqs_types,     only: wp
+    use fqs_types,        only: wp
+    use fqs_utility_base, only: check_division_scalar 
 
     implicit none
+
     private
 
     type, public :: quat_t
@@ -98,13 +100,25 @@ contains
     elemental function inverse(self) result(inv)
         class(quat_t), intent(in) :: self
         type(quat_t)              :: inv 
+
+        ! Local variables
+        type(quat_t)              :: conj
         real(wp)                  :: sum2 
-        ! ------------------------------------------------
-        ! TODO: replace this with a safe division
-        ! ------------------------------------------------
+        logical                   :: ok_w
+        logical                   :: ok_x
+        logical                   :: ok_y
+        logical                   :: ok_z
+
+        conj = self % conj()
         sum2 = self % sum2()
-        if ( sum2 >= epsilon(sum2) ) then ! avoid division by zero
+        ok_w  = check_division_scalar(conj % w, sum2)
+        ok_x  = check_division_scalar(conj % x, sum2)
+        ok_y  = check_division_scalar(conj % y, sum2)
+        ok_z  = check_division_scalar(conj % z, sum2)
+        if (ok_w .and. ok_x .and. ok_y .and. ok_z) then
             inv = ( self % conj() ) / sum2
+        else
+            inv = quat_t(0.0_wp, 0.0_wp, 0.0_wp, 0.0_wp)
         end if
     end function inverse
 

@@ -89,6 +89,9 @@ contains
             denom = sqrt(1.0_wp - (qnorm % w)*(qnorm % w))
             if ( check_division(axis_angle % axis, denom) ) then
                 axis_angle % axis = ( (axis_angle % axis) ) / denom
+                ! -------------------------------------------------
+                ! TODO: normalize axis???
+                ! -------------------------------------------------
             else
                 axis_angle % axis = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
             end if

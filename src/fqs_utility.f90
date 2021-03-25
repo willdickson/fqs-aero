@@ -1,8 +1,9 @@
 module fqs_utility
 
-    use fqs_types,      only: wp
-    use fqs_vector,     only: vect_t
-    use fqs_quaternion, only: quat_t
+    use fqs_types,        only: wp
+    use fqs_vector,       only: vect_t
+    use fqs_quaternion,   only: quat_t
+    use fqs_utility_base, only: check_division_scalar
 
     implicit none
     
@@ -67,18 +68,6 @@ contains
     end subroutine linspace_sub
 
 
-    elemental function check_division_scalar(num,den) result(ok)
-        real(wp), intent(in) :: num
-        real(wp), intent(in) :: den
-        logical              :: ok
-        if ((exponent(num) - exponent(den) >= maxexponent(num)) .or. (den == 0.0_wp)) then
-            ok = .false.
-        else
-            ok = .true.
-        end if
-    end function check_division_scalar
-
-
     elemental function check_division_vect(num, den) result(ok)
         type(vect_t), intent(in) :: num
         real(wp),     intent(in) :: den
@@ -98,6 +87,6 @@ contains
         ok = ok .and. check_division(num % y, den)
         ok = ok .and. check_division(num % z, den)
     end function check_division_quat
-
+    
 
 end module fqs_utility
