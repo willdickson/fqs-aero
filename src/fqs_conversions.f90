@@ -4,19 +4,21 @@ module fqs_conversions
     use fqs_vector,       only: vect_t
     use fqs_quaternion,   only: quat_t
     use fqs_euler_angle,  only: euler_t
+    use fqs_axis_angle,   only: axis_angle_t
     use fqs_constants,    only: pi 
-
+    use fqs_utility,      only: check_division
 
     implicit none
     private
 
     public :: quat_from_vect
-    public :: vect_from_quat
     public :: quat_from_euler
     public :: quat_from_axis_angle
+    public :: vect_from_quat
+    public :: axis_angle_from_quat
     public :: euler_from_quat
     public :: test_convert
-    
+
 contains
 
 
@@ -42,6 +44,8 @@ contains
     elemental function quat_from_euler(angles) result(q)
         type(euler_t), intent(in) :: angles
         type(quat_t)              :: q
+
+        ! Local variables
         real(wp)                  :: ch, ca, cb
         real(wp)                  :: sh, sa, sb
         ch = cos(0.5_wp * (angles % heading))
@@ -57,22 +61,51 @@ contains
     end function quat_from_euler
 
 
-    elemental function quat_from_axis_angle(axis, angle) result(q)
-        type(vect_t), intent(in)  :: axis
-        real(wp),     intent(in)  :: angle 
-        type(quat_t)              :: q
-        q % w = cos( 0.5_wp * angle )
-        q % x = (axis % x) * sin(0.5_wp * angle)
-        q % y = (axis % y) * sin(0.5_wp * angle)
-        q % z = (axis % z) * sin(0.5_wp * angle)
+    elemental function quat_from_axis_angle(axis_angle) result(q)
+        type(axis_angle_t), intent(in) :: axis_angle
+        type(quat_t)                   :: q
+
+        q % w = cos( 0.5_wp * (axis_angle % angle) )
+        q % x = (axis_angle % axis % x) * sin(0.5_wp * (axis_angle % angle))
+        q % y = (axis_angle % axis % y) * sin(0.5_wp * (axis_angle % angle))
+        q % z = (axis_angle % axis % z) * sin(0.5_wp * (axis_angle % angle))
     end function quat_from_axis_angle
+
+
+    elemental function axis_angle_from_quat(q) result(axis_angle)
+        type(quat_t), intent(in)  :: q
+        type(axis_angle_t)        :: axis_angle
+
+        ! Local variables
+        real(wp)     :: norm
+        real(wp)     :: denom
+        type(quat_t) :: qnorm
+
+        norm = q % norm()
+        if ( check_division(q, norm) ) then
+            qnorm = q / norm
+            axis_angle % angle = 2.0_wp*acos(qnorm % w)
+            axis_angle % axis = vect_from_quat(qnorm)
+            denom = sqrt(1.0_wp - (qnorm % w)*(qnorm % w))
+            if ( check_division(axis_angle % axis, denom) ) then
+                axis_angle % axis = ( (axis_angle % axis) ) / denom
+            else
+                axis_angle % axis = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
+            end if
+        else
+            axis_angle % angle = 0.0_wp
+            axis_angle % axis = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
+        end if
+    end function axis_angle_from_quat
 
 
     elemental function euler_from_quat(q,thresh_input) result(angles)
         type(quat_t), intent(in)       :: q
         real(wp), intent(in), optional :: thresh_input
-        real(wp), parameter            :: thresh_default = 0.4999_wp
         type(euler_t)                  :: angles
+
+        ! Local variables
+        real(wp), parameter            :: thresh_default = 0.4999_wp
         real(wp)                       :: thresh
         real(wp)                       :: test
         real(wp)                       :: sum2
@@ -120,18 +153,19 @@ contains
     end function euler_from_quat
 
     subroutine test_convert()
-        type(quat_t)  :: q
-        type(quat_t)  :: p
-        type(euler_t) :: angles
-        type(euler_t) :: angles_2
-        type(vect_t)  :: axis
-        real(wp)      :: theta = 0.5_wp * pi
+        type(quat_t)        :: q
+        type(quat_t)        :: p
+        type(euler_t)       :: angles
+        type(euler_t)       :: angles_2
+        type(vect_t)        :: axis
+        type(axis_angle_t) :: axis_angle
+        real(wp)           :: theta = 0.5_wp * pi
 
+        axis_angle = axis_angle_t(vect_t(0.0, 1.0, 0.0), 0.5_wp)
         angles = euler_t(pi/2.0,0.0,0.0)
-        axis = vect_t(0.0, 1.0, 0.0)
 
         q = quat_from_euler(angles)
-        p = quat_from_axis_angle(axis,theta)
+        p = quat_from_axis_angle(axis_angle)
 
         angles_2 = euler_from_quat(q)
 

@@ -5,6 +5,7 @@ module fqs
     use fqs_vector
     use fqs_quaternion
     use fqs_euler_angle
+    use fqs_axis_angle
     use fqs_rotations
     use fqs_conversions
     use fqs_utility

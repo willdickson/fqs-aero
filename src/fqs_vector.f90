@@ -15,10 +15,12 @@ module fqs_vector
         generic, public :: operator(-) => sub
         generic, public :: operator(*) => mul_left 
         generic, public :: operator(*) => mul_right 
+        generic, public :: operator(/) => divide_by_scalar
         procedure, pass(self) :: add
         procedure, pass(self) :: sub 
         procedure, pass(self) :: mul_left
         procedure, pass(self) :: mul_right
+        procedure, pass(self) :: divide_by_scalar
         procedure, pass(self) :: to_array => to_array
     end type vect_t
 
@@ -40,7 +42,7 @@ contains
 
     elemental function new_from_values(x,y,z) result(v)
         real(wp), intent(in) :: x, y, z
-        type(vect_t) :: v
+        type(vect_t)         :: v
         v % x = x 
         v % y = y
         v % z = z 
@@ -50,7 +52,8 @@ contains
     ! -------------------------------------------------------------------------
 
     elemental function add(self,v) result(w)
-        class(vect_t), intent(in) :: self, v
+        class(vect_t), intent(in) :: self
+        type(vect_t),  intent(in) :: v
         type(vect_t)              :: w
         w % x = self % x + v % x
         w % y = self % y + v % y
@@ -59,7 +62,8 @@ contains
 
 
     elemental function sub(self,v) result(w)
-        class(vect_t), intent(in) :: self, v
+        class(vect_t), intent(in) :: self
+        type(vect_t),  intent(in) :: v
         type(vect_t)              :: w
         w % x = self % x - v % x
         w % y = self % y - v % y
@@ -85,6 +89,16 @@ contains
         w % y = scalar * (self % y)
         w % z = scalar * (self % z)
     end function mul_right
+
+
+    elemental function divide_by_scalar(self,scalar) result(v) 
+        class(vect_t), intent(in) :: self
+        real(wp), intent(in)      :: scalar 
+        type(vect_t) :: v
+        v%x = self%x / scalar
+        v%y = self%y / scalar
+        v%z = self%z / scalar
+    end function divide_by_scalar
 
 
     function to_array(self) result(a)

@@ -52,7 +52,8 @@ contains
     ! -------------------------------------------------------------------------
 
     elemental function multiply(self,p) result(q) 
-        class(quat_t), intent(in) :: self, p
+        class(quat_t), intent(in) :: self
+        type(quat_t),  intent(in) :: p
         type(quat_t) :: q
         q%w = self%w * p%w - self%x * p%x - self%y * p%y - self%z * p%z
         q%x = self%w * p%x + self%x * p%w + self%y * p%z - self%z * p%y
@@ -63,7 +64,7 @@ contains
 
     elemental function multiply_scalar_right(self,scalar) result(q) 
         class(quat_t), intent(in) :: self
-        real(wp), intent(in) :: scalar 
+        real(wp),      intent(in) :: scalar 
         type(quat_t) :: q
         q%w = scalar * (self % w)
         q%x = scalar * (self % x)
@@ -74,7 +75,7 @@ contains
 
     elemental function multiply_scalar_left(scalar,self) result(q) 
         class(quat_t), intent(in) :: self
-        real(wp), intent(in) :: scalar 
+        real(wp),      intent(in) :: scalar 
         type(quat_t) :: q
         q%w = scalar * (self % w)
         q%x = scalar * (self % x)
@@ -85,7 +86,7 @@ contains
 
     elemental function divide_by_scalar(self,scalar) result(q) 
         class(quat_t), intent(in) :: self
-        real(wp), intent(in) :: scalar 
+        real(wp),      intent(in) :: scalar 
         type(quat_t) :: q
         q%w = self%w / scalar
         q%x = self%x / scalar
@@ -98,6 +99,9 @@ contains
         class(quat_t), intent(in) :: self
         type(quat_t)              :: inv 
         real(wp)                  :: sum2 
+        ! ------------------------------------------------
+        ! TODO: replace this with a safe division
+        ! ------------------------------------------------
         sum2 = self % sum2()
         if ( sum2 >= epsilon(sum2) ) then ! avoid division by zero
             inv = ( self % conj() ) / sum2
@@ -107,7 +111,7 @@ contains
 
     elemental function conjugate(self) result(conj)
         class(quat_t), intent(in) :: self
-        type(quat_t) :: conj 
+        type(quat_t)              :: conj 
         conj%w =  self%w
         conj%x = -self%x
         conj%y = -self%y
@@ -117,16 +121,17 @@ contains
 
     elemental function normal(self) result(norm)
         class(quat_t), intent(in) :: self
-        real(wp) :: norm
+        real(wp)                  :: norm
         norm = sqrt((self % w)**2 + (self % x)**2 + (self % y)**2 + (self % z)**2)
     end function normal
 
 
     elemental function sum_of_squares(self) result(sum2)
         class(quat_t), intent(in) :: self
-        real(wp) :: sum2
+        real(wp)                  :: sum2
         sum2 = (self % w)**2 + (self % x)**2 + (self % y)**2 + (self % z)**2
     end function sum_of_squares
+
 
     function to_array(self) result(a)
         class(quat_t), intent(in) :: self

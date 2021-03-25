@@ -1,12 +1,21 @@
 module fqs_utility
 
-    use fqs_types, only: wp
+    use fqs_types,      only: wp
+    use fqs_vector,     only: vect_t
+    use fqs_quaternion, only: quat_t
 
     implicit none
     
     private
 
-    public linspace_fcn, linspace_sub
+    public linspace_fcn, linspace_sub, check_division
+
+    interface check_division
+        procedure :: check_division_scalar
+        procedure :: check_division_vect
+        procedure :: check_division_quat
+    end interface check_division
+
 
 contains
 
@@ -56,5 +65,39 @@ contains
             samples(i) = a + (i-1)*step
         end do
     end subroutine linspace_sub
+
+
+    elemental function check_division_scalar(num,den) result(ok)
+        real(wp), intent(in) :: num
+        real(wp), intent(in) :: den
+        logical              :: ok
+        if ((exponent(num) - exponent(den) >= maxexponent(num)) .or. (den == 0.0_wp)) then
+            ok = .false.
+        else
+            ok = .true.
+        end if
+    end function check_division_scalar
+
+
+    elemental function check_division_vect(num, den) result(ok)
+        type(vect_t), intent(in) :: num
+        real(wp),     intent(in) :: den
+        logical                  :: ok
+        ok = check_division(num % x, den) 
+        ok = ok .and. check_division(num % y, den)
+        ok = ok .and. check_division(num % z, den)
+    end function check_division_vect
+
+
+    elemental function check_division_quat(num, den) result(ok)
+        type(quat_t), intent(in) :: num
+        real(wp),     intent(in) :: den
+        logical                  :: ok
+        ok = check_division(num % w, den) 
+        ok = ok .and. check_division(num % x, den)
+        ok = ok .and. check_division(num % y, den)
+        ok = ok .and. check_division(num % z, den)
+    end function check_division_quat
+
 
 end module fqs_utility
