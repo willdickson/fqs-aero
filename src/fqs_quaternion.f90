@@ -136,7 +136,7 @@ contains
     elemental function normal(self) result(norm)
         class(quat_t), intent(in) :: self
         real(wp)                  :: norm
-        norm = sqrt((self % w)**2 + (self % x)**2 + (self % y)**2 + (self % z)**2)
+        norm = sqrt( self % sum2() )
     end function normal
 
 

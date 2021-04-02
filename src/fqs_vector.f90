@@ -16,11 +16,15 @@ module fqs_vector
         generic, public :: operator(*) => mul_left 
         generic, public :: operator(*) => mul_right 
         generic, public :: operator(/) => divide_by_scalar
+
         procedure, pass(self) :: add
         procedure, pass(self) :: sub 
         procedure, pass(self) :: mul_left
         procedure, pass(self) :: mul_right
         procedure, pass(self) :: divide_by_scalar
+
+        procedure, pass(self) :: norm => normal
+        procedure, pass(self) :: sum2 => sum_of_squares
         procedure, pass(self) :: to_array => to_array
     end type vect_t
 
@@ -99,6 +103,20 @@ contains
         v%y = self%y / scalar
         v%z = self%z / scalar
     end function divide_by_scalar
+
+
+    elemental function normal(self) result(norm)
+        class(vect_t), intent(in) :: self
+        real(wp)                  :: norm
+        norm = sqrt( self % sum2() )
+    end function normal
+
+
+    elemental function sum_of_squares(self) result(sum2)
+        class(vect_t), intent(in) :: self
+        real(wp)                  :: sum2
+        sum2 = (self % x)**2 + (self % y)**2 + (self % z)**2
+    end function sum_of_squares
 
 
     function to_array(self) result(a)

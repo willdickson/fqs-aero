@@ -1,4 +1,4 @@
-module fqs_utility_base
+module fqs_utility_basic
 
     use fqs_types,      only: wp
 
@@ -21,4 +21,4 @@ contains
         end if
     end function check_division_scalar
 
-end module fqs_utility_base
+end module fqs_utility_basic
