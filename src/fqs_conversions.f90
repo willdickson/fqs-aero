@@ -18,6 +18,7 @@ module fqs_conversions
     public :: axis_angle_from_quat
     public :: axis_angle_from_euler
     public :: euler_from_quat
+    public :: euler_from_axis_angle
 
 contains
 
@@ -163,5 +164,17 @@ contains
             angles % bank     = atan2( 2.0_wp * (qwx - qyz), -qxx + qyy - qzz + qww ) 
         end if
     end function euler_from_quat
+
+
+    elemental function euler_from_axis_angle(axis_angle) result(euler)
+        type(axis_angle_t), intent(in) :: axis_angle
+        type(euler_t)                  :: euler
+
+        !Local variables
+        type(quat_t) :: q
+
+        q = quat_from_axis_angle(axis_angle)
+        euler = euler_from_quat(q)
+    end function euler_from_axis_angle
 
 end module fqs_conversions
