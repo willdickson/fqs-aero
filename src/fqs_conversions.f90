@@ -16,8 +16,8 @@ module fqs_conversions
     public :: quat_from_axis_angle
     public :: vect_from_quat
     public :: axis_angle_from_quat
+    public :: axis_angle_from_euler
     public :: euler_from_quat
-    public :: test_convert
 
 contains
 
@@ -89,9 +89,6 @@ contains
             denom = sqrt(1.0_wp - (qnorm % w)*(qnorm % w))
             if ( check_division(axis_angle % axis, denom) ) then
                 axis_angle % axis = ( (axis_angle % axis) ) / denom
-                ! -------------------------------------------------
-                ! TODO: normalize axis???
-                ! -------------------------------------------------
             else
                 axis_angle % axis = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
             end if
@@ -100,6 +97,18 @@ contains
             axis_angle % axis = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
         end if
     end function axis_angle_from_quat
+
+
+    elemental function axis_angle_from_euler(euler) result(axis_angle)
+        type(euler_t), intent(in) :: euler
+        type(axis_angle_t)        :: axis_angle
+
+        ! Local variables
+        type(quat_t) :: q
+
+        q = quat_from_euler(euler)
+        axis_angle = axis_angle_from_quat(q)
+    end function axis_angle_from_euler
 
 
     elemental function euler_from_quat(q,thresh_input) result(angles)
@@ -154,28 +163,5 @@ contains
             angles % bank     = atan2( 2.0_wp * (qwx - qyz), -qxx + qyy - qzz + qww ) 
         end if
     end function euler_from_quat
-
-    subroutine test_convert()
-        type(quat_t)        :: q
-        type(quat_t)        :: p
-        type(euler_t)       :: angles
-        type(euler_t)       :: angles_2
-        type(vect_t)        :: axis
-        type(axis_angle_t) :: axis_angle
-        real(wp)           :: theta = 0.5_wp * pi
-
-        axis_angle = axis_angle_t(vect_t(0.0, 1.0, 0.0), 0.5_wp)
-        angles = euler_t(pi/2.0,0.0,0.0)
-
-        q = quat_from_euler(angles)
-        p = quat_from_axis_angle(axis_angle)
-
-        angles_2 = euler_from_quat(q)
-
-        print *, q
-        print *, p
-        print *, angles
-        print *, angles_2
-    end subroutine test_convert
 
 end module fqs_conversions

@@ -33,13 +33,13 @@ program main
 
     v % x = linspace_fcn(0.0_wp, 10.0_wp, num_pts)
     w = rotate(v,axis_angle)
-    u = rotate(v,euler)
+    !u = rotate(v,euler)
 
     print *, ' '
     do i = 1,size(v)
         print *, 'v', v(i)
         print *, 'w', w(i)
-        print *, 'u', u(i)
+        !print *, 'u', u(i)
         print *, ' '
     end do
 

@@ -1,48 +1,24 @@
 program example_tmp
 
     use fqs,  only: wp
-    use fqs,  only: vect_t
     use fqs,  only: quat_t
-    use fqs,  only: check_division
-
+    use fqs,  only: euler_t
+    use fqs,  only: axis_angle_t
+    use fqs,  only: axis_angle_from_euler
+    use fqs,  only: pi
 
     implicit none
 
-    real(wp)                  :: x
-    real(wp)                  :: y
-    type(vect_t)              :: v
-    type(quat_t)              :: q
-    logical                   :: ok 
-    real(wp),     allocatable :: a(:)
-    type(vect_t), allocatable :: va(:)
-    type(quat_t), allocatable :: qa(:)
-    logical,      allocatable :: ok_a(:)
-    integer,      parameter   :: n = 10
+    type(euler_t)      :: euler
+    type(axis_angle_t) :: axis_angle
 
-    allocate(a(n))
-    allocate(ok_a(n))
-    allocate(va(n))
-    allocate(qa(n))
+    euler % heading = 0.0_wp*pi
+    euler % attitude = 0.0_wp*pi
+    euler % bank = 0.5_wp*pi
+    axis_angle = axis_angle_from_euler(euler)
 
-    x = 10000.0_wp
-    y = epsilon(0.0_wp)
-    print *, maxexponent(y)
-    print *, exponent(x)
-    print *, exponent(1.0/y)
+    print *, euler
+    print *, axis_angle
 
-    v = vect_t(1.0_wp, 2.0_wp, 3.0_wp)
-    ok = check_division(v,y)
-    print *, ok
-
-    q = quat_t(1.0_wp, 0.0_wp, 0.0_wp, 0.0_wp)
-    ok = check_division(q,y)
-    print *, ok
-
-    ok_a = check_division(a,y)
-    print *, ok_a
-
-    va = vect_t(1.0_wp, 2.0_wp, 3.0_wp)
-    ok_a = check_division(a,y)
-    print *, ok_a
 
 end program example_tmp

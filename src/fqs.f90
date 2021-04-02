@@ -9,6 +9,7 @@ module fqs
     use fqs_rotations
     use fqs_conversions
     use fqs_utility
+    use fqs_hdf5
 
     implicit none
 
