@@ -10,6 +10,7 @@ module fqs
     use fqs_conversions
     use fqs_utility
     use fqs_hdf5
+    use fqs_fake_kine
 
     implicit none
 

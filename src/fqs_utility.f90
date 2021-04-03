@@ -1,6 +1,7 @@
 module fqs_utility
 
     use fqs_types,         only: wp
+    use fqs_constants,     only: pi
     use fqs_vector,        only: vect_t
     use fqs_quaternion,    only: quat_t
     use fqs_utility_basic, only: check_division_scalar
@@ -9,7 +10,12 @@ module fqs_utility
     
     private
 
-    public linspace_fcn, linspace_sub, check_division
+    public deg2rad
+    public rad2deg
+    public linspace_fcn 
+    public linspace_sub 
+    public check_division
+
 
     interface check_division
         procedure :: check_division_scalar
@@ -19,6 +25,20 @@ module fqs_utility
 
 
 contains
+
+    elemental function deg2rad(ang_deg) result(ang_rad)
+        real(wp), intent(in) :: ang_deg 
+        real(wp)             :: ang_rad 
+        ang_rad = (pi/180.0_wp)*ang_deg
+    end function deg2rad
+
+
+    elemental function rad2deg(ang_rad) result(ang_deg)
+        real(wp), intent(in) :: ang_rad 
+        real(wp)             :: ang_deg
+        ang_deg = (180.0_wp/pi)*ang_rad
+    end function rad2deg
+
 
     function linspace_fcn(a,b,n,endpoint) result(samples)
         real(wp), intent(in)           :: a          ! start point
