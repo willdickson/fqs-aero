@@ -1,4 +1,4 @@
-program example_tmp
+program main
 
     use fqs,  only: wp
     use fqs,  only: vect_t
@@ -12,6 +12,7 @@ program example_tmp
     use fqs,  only: fake_param_type_3
     use fqs,  only: fake_param_type_4
     use fqs,  only: load_dataset
+    use fqs,  only: save_dataset
     use fqs,  only: rotate
     use fqs,  only: vect_to_array
     use pyplot_module, only: pyplot
@@ -21,19 +22,19 @@ program example_tmp
     integer, parameter            :: num_time_pts = 200
     character(len=:), allocatable :: filename
     character(len=:), allocatable :: dataname
-    real(wp), allocatable         :: be_position(:)
-    real(wp), allocatable         :: chord_le(:)
-    real(wp), allocatable         :: chord_te(:)
+    real(wp), allocatable         :: elem_pos(:)
+    real(wp), allocatable         :: le_pos(:)
+    real(wp), allocatable         :: te_pos(:)
     real(wp), allocatable         :: phi(:)
     real(wp), allocatable         :: alpha(:)
     real(wp), allocatable         :: theta(:)
     type(pyplot)                  :: plt
     real(wp), allocatable         :: t(:)
     type(euler_t), allocatable    :: euler(:,:)
-    type(vect_t), allocatable     :: sp_vects(:,:)
+    type(vect_t), allocatable     :: ax_vects(:,:)
     type(vect_t), allocatable     :: le_vects(:,:)
     type(vect_t), allocatable     :: te_vects(:,:)
-    real(wp), allocatable         :: sp_array(:,:,:)
+    real(wp), allocatable         :: ax_array(:,:,:)
     real(wp), allocatable         :: le_array(:,:,:)
     real(wp), allocatable         :: te_array(:,:,:)
     real(wp)                      :: t0 
@@ -58,24 +59,24 @@ program example_tmp
 
     ! Load datasets
     dataname = '/wing/left/blade_element/position'
-    call load_dataset(filename, dataname,  be_position, ierr)
+    call load_dataset(filename, dataname,  elem_pos, ierr)
     if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
     dataname = '/wing/left/blade_element/chord_leading'
-    call load_dataset(filename, dataname,  chord_le, ierr)
+    call load_dataset(filename, dataname,  le_pos, ierr)
     if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
     dataname = '/wing/left/blade_element/chord_trailing'
-    call load_dataset(filename, dataname,  chord_te, ierr)
+    call load_dataset(filename, dataname,  te_pos, ierr)
     if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
     ! Create wing position vectors
-    num_be = size(be_position)
-    allocate(sp_vects(num_time_pts,num_be))
+    num_be = size(elem_pos)
+    allocate(ax_vects(num_time_pts,num_be))
     allocate(le_vects(num_time_pts,num_be))
     allocate(te_vects(num_time_pts,num_be))
     allocate(euler(num_time_pts,num_be))
-    allocate(sp_array(num_time_pts,num_be,3))
+    allocate(ax_array(num_time_pts,num_be,3))
     allocate(le_array(num_time_pts,num_be,3))
     allocate(te_array(num_time_pts,num_be,3))
 
@@ -85,36 +86,42 @@ program example_tmp
     euler(:,2:) = spread(euler(:,1), 2, num_be-1)
 
     do i=1,num_time_pts
-        sp_vects(i,:) % z = be_position
-        le_vects(i,:) % z = be_position
-        te_vects(i,:) % z = be_position
-        le_vects(i,:) % y = chord_le 
-        te_vects(i,:) % y = chord_te 
+        ax_vects(i,:) % z = elem_pos
+        le_vects(i,:) % z = elem_pos
+        te_vects(i,:) % z = elem_pos
+        le_vects(i,:) % y = le_pos 
+        te_vects(i,:) % y = te_pos 
     end do
 
     call cpu_time(t_cpu_start)
 
-    sp_vects = rotate(sp_vects, euler)
-    le_vects = rotate(sp_vects, euler)
-    te_vects = rotate(sp_vects, euler)
+    ax_vects = rotate(ax_vects, euler)
+    le_vects = rotate(ax_vects, euler)
+    te_vects = rotate(ax_vects, euler)
 
-    sp_array = vect_to_array(sp_vects)
+    ax_array = vect_to_array(ax_vects)
     le_array = vect_to_array(le_vects) 
-    le_array = vect_to_array(te_vects)
+    te_array = vect_to_array(te_vects)
     
     call cpu_time(t_cpu_finish)
     print *, (t_cpu_finish - t_cpu_start)
 
-    phi = rad2deg(euler(:,1) % heading)
-    alpha = rad2deg(euler(:,1) % attitude)
-    theta = rad2deg(euler(:,1) % bank)
+    if (.false.) then
+        phi = rad2deg(euler(:,1) % heading)
+        alpha = rad2deg(euler(:,1) % attitude)
+        theta = rad2deg(euler(:,1) % bank)
 
-    call plt % initialize(grid=.true.,xlabel='t (sec)',ylabel='(deg)')
-    call plt % add_plot(t,phi,label='phi',linestyle='b',markersize=5,linewidth=2)
-    call plt % add_plot(t,alpha,label='alpha',linestyle='g',markersize=5,linewidth=2)
-    call plt % add_plot(t,theta,label='alpha',linestyle='r',markersize=5,linewidth=2)
-    call plt % showfig()
+        call plt % initialize(grid=.true.,xlabel='t (sec)',ylabel='(deg)')
+        call plt % add_plot(t,phi,label='phi',linestyle='b',markersize=5,linewidth=2)
+        call plt % add_plot(t,alpha,label='alpha',linestyle='g',markersize=5,linewidth=2)
+        call plt % add_plot(t,theta,label='alpha',linestyle='r',markersize=5,linewidth=2)
+        call plt % showfig()
+    end if
+
+    call save_dataset('test1.hdf5', '/ax_array', ax_array, ierr, status='new', action='w')
+    call save_dataset('test1.hdf5', '/le_array', le_array, ierr, status='old', action='rw')
+    call save_dataset('test1.hdf5', '/te_array', te_array, ierr, status='old', action='rw')
 
 contains
 
-end program example_tmp
+end program main 
