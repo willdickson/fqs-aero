@@ -1,43 +1,113 @@
 program example_tmp
 
     use fqs,  only: wp
-    use fqs,  only: pi
+    use fqs,  only: vect_t
     use fqs,  only: euler_t
     use fqs,  only: rad2deg
     use fqs,  only: linspace_sub
     use fqs,  only: fake_kine
-    use fqs,  only: fake_kine_period 
     use fqs,  only: fake_kine_param_t
     use fqs,  only: fake_param_type_1
     use fqs,  only: fake_param_type_2
     use fqs,  only: fake_param_type_3
     use fqs,  only: fake_param_type_4
+    use fqs,  only: load_dataset
+    use fqs,  only: rotate
+    use fqs,  only: vect_to_array
     use pyplot_module, only: pyplot
 
     implicit none
 
-    integer, parameter      :: num_pts = 500
-    type(euler_t)           :: euler(num_pts)
-    real(wp)                :: phi(num_pts)
-    real(wp)                :: alpha(num_pts)
-    real(wp)                :: theta(num_pts)
-    real(wp)                :: t(num_pts)
-    real(wp)                :: t0 
-    real(wp)                :: tn 
-    integer                 :: i
-    type(pyplot)            :: plt
-    type(fake_kine_param_t) :: param
+    integer, parameter            :: num_time_pts = 200
+    character(len=:), allocatable :: filename
+    character(len=:), allocatable :: dataname
+    real(wp), allocatable         :: be_position(:)
+    real(wp), allocatable         :: chord_le(:)
+    real(wp), allocatable         :: chord_te(:)
+    real(wp), allocatable         :: phi(:)
+    real(wp), allocatable         :: alpha(:)
+    real(wp), allocatable         :: theta(:)
+    type(pyplot)                  :: plt
+    real(wp), allocatable         :: t(:)
+    type(euler_t), allocatable    :: euler(:,:)
+    type(vect_t), allocatable     :: sp_vects(:,:)
+    type(vect_t), allocatable     :: le_vects(:,:)
+    type(vect_t), allocatable     :: te_vects(:,:)
+    real(wp), allocatable         :: sp_array(:,:,:)
+    real(wp), allocatable         :: le_array(:,:,:)
+    real(wp), allocatable         :: te_array(:,:,:)
+    real(wp)                      :: t0 
+    real(wp)                      :: tn 
+    integer                       :: num_be
+    integer                       :: i,j
+    integer                       :: ierr
+    type(fake_kine_param_t)       :: param
+    real(wp)                      :: t_cpu_start
+    real(wp)                      :: t_cpu_finish
 
+    allocate(phi(num_time_pts))
+    allocate(alpha(num_time_pts))
+    allocate(theta(num_time_pts))
+    allocate(t(num_time_pts))
 
     param = fake_param_type_4()
     t0 = 0.0_wp
     tn = 1.0_wp*param % period
 
+    filename = '/home/wbd/work/programming/python/fly_aero_data/wing_data/fly_param.hdf5'
+
+    ! Load datasets
+    dataname = '/wing/left/blade_element/position'
+    call load_dataset(filename, dataname,  be_position, ierr)
+    if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
+
+    dataname = '/wing/left/blade_element/chord_leading'
+    call load_dataset(filename, dataname,  chord_le, ierr)
+    if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
+
+    dataname = '/wing/left/blade_element/chord_trailing'
+    call load_dataset(filename, dataname,  chord_te, ierr)
+    if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
+
+    ! Create wing position vectors
+    num_be = size(be_position)
+    allocate(sp_vects(num_time_pts,num_be))
+    allocate(le_vects(num_time_pts,num_be))
+    allocate(te_vects(num_time_pts,num_be))
+    allocate(euler(num_time_pts,num_be))
+    allocate(sp_array(num_time_pts,num_be,3))
+    allocate(le_array(num_time_pts,num_be,3))
+    allocate(te_array(num_time_pts,num_be,3))
+
+    ! Get wing kinematics
     call linspace_sub(t0, tn, t)
-    call fake_kine(t, euler, param=param)
-    phi = rad2deg(euler % heading)
-    alpha = rad2deg(euler % attitude)
-    theta = rad2deg(euler % bank)
+    call fake_kine(t, euler(:,1), param=param)
+    euler(:,2:) = spread(euler(:,1), 2, num_be-1)
+
+    do i=1,num_time_pts
+        sp_vects(i,:) % z = be_position
+        le_vects(i,:) % z = be_position
+        te_vects(i,:) % z = be_position
+        le_vects(i,:) % y = chord_le 
+        te_vects(i,:) % y = chord_te 
+    end do
+
+    call cpu_time(t_cpu_start)
+
+    sp_vects = rotate(sp_vects, euler)
+    le_vects = rotate(sp_vects, euler)
+    te_vects = rotate(sp_vects, euler)
+
+    sp_array = vect_to_array(sp_vects)
+    le_array = vect_to_array(le_vects) 
+    le_array = vect_to_array(te_vects)
+    
+    call cpu_time(t_cpu_finish)
+    print *, (t_cpu_finish - t_cpu_start)
+
+    phi = rad2deg(euler(:,1) % heading)
+    alpha = rad2deg(euler(:,1) % attitude)
+    theta = rad2deg(euler(:,1) % bank)
 
     call plt % initialize(grid=.true.,xlabel='t (sec)',ylabel='(deg)')
     call plt % add_plot(t,phi,label='phi',linestyle='b',markersize=5,linewidth=2)
@@ -45,10 +115,6 @@ program example_tmp
     call plt % add_plot(t,theta,label='alpha',linestyle='r',markersize=5,linewidth=2)
     call plt % showfig()
 
-
 contains
-
-
-
 
 end program example_tmp

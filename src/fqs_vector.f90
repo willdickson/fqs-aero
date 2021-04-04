@@ -34,7 +34,8 @@ module fqs_vector
 
     interface vect_to_array
         procedure :: single_vect_to_array
-        procedure :: array_of_vect_to_array
+        procedure :: array_1d_of_vect_to_array
+        procedure :: array_2d_of_vect_to_array
     end interface vect_to_array
 
     public vect_dot, vect_cross, vect_to_array
@@ -158,14 +159,25 @@ contains
     end function single_vect_to_array
 
 
-    function array_of_vect_to_array(v) result(a)
+    function array_1d_of_vect_to_array(v) result(a)
         type(vect_t), intent(in) :: v(:)
         real(wp)                 :: a(size(v),3) 
         integer                  :: i
         do i=1,size(v)
             a(i,:) = v(i) % to_array() 
         end do
-    end function array_of_vect_to_array
+    end function array_1d_of_vect_to_array
 
+
+    function array_2d_of_vect_to_array(v) result(a)
+        type(vect_t), intent(in) :: v(:,:)
+        real(wp)                 :: a(size(v,1),size(v,2),3) 
+        integer                  :: i,j
+        do i=1,size(v,1)
+            do j=1,size(v,2)
+                a(i,j,:) = v(i,j) % to_array()
+            end do
+        end do
+    end function array_2d_of_vect_to_array
 
 end module fqs_vector
