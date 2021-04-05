@@ -3,8 +3,9 @@ module fqs_rotations
     use fqs_types,       only: wp
     use fqs_vector,      only: vect_t
     use fqs_quaternion,  only: quat_t
-    use fqs_axis_angle,  only: axis_angle_t
     use fqs_euler_angle, only: euler_t
+    use fqs_axis_angle,  only: axis_angle_t
+    use fqs_wing_frame,  only: wing_frame_t
     use fqs_conversions, only: quat_from_vect
     use fqs_conversions, only: vect_from_quat
     use fqs_conversions, only: quat_from_euler
@@ -22,8 +23,9 @@ module fqs_rotations
         procedure :: rotate_euler_by_axis_angle
         procedure :: rotate_vect_by_axis_angle
         procedure :: rotate_vect_by_euler
+        procedure :: rotate_wing_frame_by_euler
+        procedure :: rotate_wing_frame_by_axis_angle
     end interface rotate
-
 
 contains 
 
@@ -86,6 +88,29 @@ contains
         q_w = q_rot * (q_v * q_rot_inv)
         w = vect_from_quat(q_w)
     end function rotate_vect_by_euler
+
+
+    elemental function rotate_wing_frame_by_euler(frame, euler) result(frame_rot)
+        ! Rotates a wing referene frame using euler angle
+        type(wing_frame_t), intent(in) :: frame
+        type(euler_t),      intent(in) :: euler
+        type(wing_frame_t)             :: frame_rot
+        frame_rot % u_axis  = rotate_vect_by_euler(frame % u_axis,  euler)
+        frame_rot % u_chord = rotate_vect_by_euler(frame % u_chord, euler)
+        frame_rot % u_norm  = rotate_vect_by_euler(frame % u_norm,  euler)
+    end function rotate_wing_frame_by_euler
+
+
+    elemental function rotate_wing_frame_by_axis_angle(frame, axis_angle) result(frame_rot)
+        ! Rotates a wing referene frame using an axis and angle rotation
+        type(wing_frame_t), intent(in) :: frame
+        type(axis_angle_t), intent(in) :: axis_angle 
+        type(wing_frame_t)             :: frame_rot
+        frame_rot % u_axis  = rotate_vect_by_axis_angle(frame % u_axis,  axis_angle)
+        frame_rot % u_chord = rotate_vect_by_axis_angle(frame % u_chord, axis_angle)
+        frame_rot % u_norm  = rotate_vect_by_axis_angle(frame % u_norm,  axis_angle)
+    end function rotate_wing_frame_by_axis_angle
+
 
 
 end module fqs_rotations

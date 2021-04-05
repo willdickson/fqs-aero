@@ -22,6 +22,7 @@ program main
     integer, parameter            :: num_time_pts = 200
     character(len=:), allocatable :: filename
     character(len=:), allocatable :: dataname
+    character(len=:), allocatable :: outfile
     real(wp), allocatable         :: elem_pos(:)
     real(wp), allocatable         :: le_pos(:)
     real(wp), allocatable         :: te_pos(:)
@@ -48,9 +49,6 @@ program main
     real(wp)                      :: alpha(num_time_pts)
     real(wp)                      :: theta(num_time_pts)
     integer                       :: i,j
-
-    real(wp) :: test1d(10)
-    real(wp) :: test2d(5,5)
 
     filename = '/home/wbd/work/programming/python/fly_aero_data/wing_data/fly_param.hdf5'
 
@@ -84,13 +82,14 @@ program main
     call cpu_time(t_cpu_start)
 
     ! Create unit vectors arrays
-    u_span  = vect_t( 0.0_wp, 0.0_wp, 1.0_wp)
-    u_chord = vect_t( 0.0_wp, 1.0_wp, 0.0_wp)
-    u_norm  = vect_t(-1.0_wp, 0.0_wp, 0.0_wp)
+    u_span  = vect_t(0.0_wp, 0.0_wp, 1.0_wp)
+    u_chord = vect_t(0.0_wp, 1.0_wp, 0.0_wp)
+    u_norm  = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
 
     ! Get wing kinematics
     call linspace_sub(t0, tn, t)
     call fake_kine(t, euler, param=param)
+    euler % bank = -(euler % bank)
 
     ! Rotate unit vectors through kinematics
     u_span  = rotate(u_span,  euler)
@@ -108,7 +107,7 @@ program main
     te_array = vect_to_array(te_vect)
 
     call cpu_time(t_cpu_finish)
-    print *, (t_cpu_finish - t_cpu_start)
+    print *, 'dt = ', (t_cpu_finish - t_cpu_start)
 
     if (.false.) then 
         phi   = rad2deg(euler % heading)
@@ -122,8 +121,9 @@ program main
         call plt % showfig()
     end if
 
-    call save_dataset('test2.hdf5', '/ax_array', ax_array, ierr, status='new', action='w')
-    call save_dataset('test2.hdf5', '/le_array', le_array, ierr, status='old', action='rw')
-    call save_dataset('test2.hdf5', '/te_array', te_array, ierr, status='old', action='rw')
+    outfile = 'test2.hdf5'
+    call save_dataset(outfile, '/ax_array', ax_array, ierr, status='new', action='w')
+    call save_dataset(outfile, '/le_array', le_array, ierr, status='old', action='rw')
+    call save_dataset(outfile, '/te_array', te_array, ierr, status='old', action='rw')
 
 end program main

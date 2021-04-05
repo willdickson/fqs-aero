@@ -11,6 +11,7 @@ module fqs
     use fqs_utility
     use fqs_hdf5
     use fqs_fake_kine
+    use fqs_wing_frame
 
     implicit none
 

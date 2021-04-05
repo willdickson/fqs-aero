@@ -28,6 +28,10 @@ module fqs_vector
         procedure, pass(self) :: to_array => to_array
     end type vect_t
 
+    type(vect_t), parameter :: e1 = vect_t(1.0_wp, 0.0_wp, 0.0_wp)
+    type(vect_t), parameter :: e2 = vect_t(0.0_wp, 1.0_wp, 0.0_wp)
+    type(vect_t), parameter :: e3 = vect_t(0.0_wp, 0.0_wp, 1.0_wp)
+
     interface vect_t
         procedure :: new_from_values
     end interface vect_t
@@ -38,7 +42,8 @@ module fqs_vector
         procedure :: array_2d_of_vect_to_array
     end interface vect_to_array
 
-    public vect_dot, vect_cross, vect_to_array
+    public e1, e2, e3
+    public vect_dot, vect_cross, vect_to_array, basis_vect
 
 contains
 
@@ -179,5 +184,24 @@ contains
             end do
         end do
     end function array_2d_of_vect_to_array
+
+    
+    elemental function basis_vect(ind) result(v)
+        integer, intent(in) :: ind
+        type(vect_t)        :: v
+
+        if ((ind > 3) .or. (ind < 0)) then
+            error stop 'ind must be 1,2,3'
+        end if
+
+        select case(ind)
+            case (1)
+                v % x = 1.0_wp
+            case (2)
+                v % y = 1.0_wp
+            case (3)
+                v % z = 1.0_wp
+        end select
+    end function basis_vect
 
 end module fqs_vector

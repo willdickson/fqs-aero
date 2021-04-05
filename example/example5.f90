@@ -15,6 +15,7 @@ program main
     use fqs,  only: save_dataset
     use fqs,  only: rotate
     use fqs,  only: vect_to_array
+    use fqs,  only: wing_frame_t
     use pyplot_module, only: pyplot
 
     implicit none
@@ -26,37 +27,34 @@ program main
     real(wp), allocatable         :: elem_pos(:)
     real(wp), allocatable         :: le_pos(:)
     real(wp), allocatable         :: te_pos(:)
-    real(wp), allocatable         :: phi(:)
-    real(wp), allocatable         :: alpha(:)
-    real(wp), allocatable         :: theta(:)
-    type(pyplot)                  :: plt
-    real(wp), allocatable         :: t(:)
-    type(euler_t), allocatable    :: euler(:,:)
-    type(vect_t), allocatable     :: ax_vects(:,:)
-    type(vect_t), allocatable     :: le_vects(:,:)
-    type(vect_t), allocatable     :: te_vects(:,:)
-    real(wp), allocatable         :: ax_array(:,:,:)
-    real(wp), allocatable         :: le_array(:,:,:)
-    real(wp), allocatable         :: te_array(:,:,:)
+    integer                       :: num_elem
+    integer                       :: ierr
     real(wp)                      :: t0 
     real(wp)                      :: tn 
-    integer                       :: num_be
-    integer                       :: i,j
-    integer                       :: ierr
     type(fake_kine_param_t)       :: param
+    type(wing_frame_t)            :: wing_frame(num_time_pts)
+    real(wp)                      :: t(num_time_pts)
+    type(euler_t)                 :: euler(num_time_pts)
+    type(vect_t), allocatable     :: ax_vect(:,:) 
+    type(vect_t), allocatable     :: le_vect(:,:) 
+    type(vect_t), allocatable     :: te_vect(:,:) 
+    real(wp), allocatable         :: ax_array(:,:,:) 
+    real(wp), allocatable         :: le_array(:,:,:) 
+    real(wp), allocatable         :: te_array(:,:,:) 
     real(wp)                      :: t_cpu_start
     real(wp)                      :: t_cpu_finish
+    type(pyplot)                  :: plt
+    real(wp)                      :: phi(num_time_pts)
+    real(wp)                      :: alpha(num_time_pts)
+    real(wp)                      :: theta(num_time_pts)
+    integer                       :: i,j
 
-    allocate(phi(num_time_pts))
-    allocate(alpha(num_time_pts))
-    allocate(theta(num_time_pts))
-    allocate(t(num_time_pts))
+    filename = '/home/wbd/work/programming/python/fly_aero_data/wing_data/fly_param.hdf5'
 
+    ! Load kinematics parameters
     param = fake_param_type_4()
     t0 = 0.0_wp
     tn = 1.0_wp*param % period
-
-    filename = '/home/wbd/work/programming/python/fly_aero_data/wing_data/fly_param.hdf5'
 
     ! Load datasets
     dataname = '/wing/left/blade_element/position'
@@ -71,48 +69,42 @@ program main
     call load_dataset(filename, dataname,  te_pos, ierr)
     if ( ierr /= 0) error stop ': unable to load dataset: '//dataname
 
-    ! Create wing position vectors
-    num_be = size(elem_pos)
-    allocate(ax_vects(num_time_pts,num_be))
-    allocate(le_vects(num_time_pts,num_be))
-    allocate(te_vects(num_time_pts,num_be))
-    allocate(euler(num_time_pts,num_be))
-    allocate(ax_array(num_time_pts,num_be,3))
-    allocate(le_array(num_time_pts,num_be,3))
-    allocate(te_array(num_time_pts,num_be,3))
+    num_elem = size(elem_pos)
+    allocate(ax_vect(num_time_pts, num_elem))
+    allocate(le_vect(num_time_pts, num_elem))
+    allocate(te_vect(num_time_pts, num_elem))
 
-    ! Get wing kinematics
-    call linspace_sub(t0, tn, t)
-    call fake_kine(t, euler(:,1), param=param)
-    euler(:,1) % bank = -(euler(:,1) % bank)
-
-    euler(:,2:) = spread(euler(:,1), 2, num_be-1)
-
-    do i=1,num_time_pts
-        ax_vects(i,:) % z = elem_pos
-        le_vects(i,:) % z = elem_pos
-        te_vects(i,:) % z = elem_pos
-        le_vects(i,:) % y = le_pos 
-        te_vects(i,:) % y = te_pos 
-    end do
+    allocate(ax_array(num_time_pts, num_elem, 3))
+    allocate(le_array(num_time_pts, num_elem, 3))
+    allocate(te_array(num_time_pts, num_elem, 3))
 
     call cpu_time(t_cpu_start)
 
-    ax_vects = rotate(ax_vects, euler)
-    le_vects = rotate(le_vects, euler)
-    te_vects = rotate(te_vects, euler)
+    ! Get wing kinematics
+    call linspace_sub(t0, tn, t)
+    call fake_kine(t, euler, param=param)
+    euler % bank = -(euler % bank)
 
-    ax_array = vect_to_array(ax_vects)
-    le_array = vect_to_array(le_vects) 
-    te_array = vect_to_array(te_vects)
-    
+    ! Rotate wing frame through kinematics
+    wing_frame = rotate(wing_frame, euler)
+
+    do i=1,num_elem
+        ax_vect(:,i) = (wing_frame % u_axis)*elem_pos(i)
+        le_vect(:,i) = (wing_frame % u_axis)*elem_pos(i) + (wing_frame % u_chord)*le_pos(i)
+        te_vect(:,i) = (wing_frame % u_axis)*elem_pos(i) + (wing_frame % u_chord)*te_pos(i)
+    end do
+
+    ax_array = vect_to_array(ax_vect)
+    le_array = vect_to_array(le_vect) 
+    te_array = vect_to_array(te_vect)
+
     call cpu_time(t_cpu_finish)
     print *, 'dt = ', (t_cpu_finish - t_cpu_start)
 
-    if (.false.) then
-        phi = rad2deg(euler(:,1) % heading)
-        alpha = rad2deg(euler(:,1) % attitude)
-        theta = rad2deg(euler(:,1) % bank)
+    if (.false.) then 
+        phi   = rad2deg(euler % heading)
+        alpha = rad2deg(euler % attitude)
+        theta = rad2deg(euler % bank)
 
         call plt % initialize(grid=.true.,xlabel='t (sec)',ylabel='(deg)')
         call plt % add_plot(t,phi,label='phi',linestyle='b',markersize=5,linewidth=2)
@@ -121,11 +113,9 @@ program main
         call plt % showfig()
     end if
 
-    outfile = 'test1.hdf5'
+    outfile = 'test3.hdf5'
     call save_dataset(outfile, '/ax_array', ax_array, ierr, status='new', action='w')
     call save_dataset(outfile, '/le_array', le_array, ierr, status='old', action='rw')
     call save_dataset(outfile, '/te_array', te_array, ierr, status='old', action='rw')
 
-contains
-
-end program main 
+end program main
